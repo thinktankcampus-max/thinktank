@@ -2,7 +2,7 @@ import React from 'react';
 
 const VenueLocation = () => {
     return (
-        <section className="py-24 bg-black text-white">
+        <section id='venue' className="py-24 bg-black text-white">
             <div className="container mx-auto px-4">
                 <div className="text-center mb-16">
                     <h2 className="text-4xl md:text-6xl font-black mb-4">Venue<span className="bg-gradient-to-r from-blue-100 to-blue-600 text-transparent bg-clip-text"> Location</span></h2>

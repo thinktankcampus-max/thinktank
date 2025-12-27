@@ -7,7 +7,7 @@ import LogoMarquee from './LogoMarquee';
 
 const Hero: React.FC = () => {
     return (
-        <section className="relative min-h-screen flex items-center pt-24 pb-20 overflow-hidden">
+        <section className="relative min-h-screen flex items-center pt-36 pb-20 overflow-hidden">
             {/* Dynamic Background */}
             <div className="absolute inset-0 -z-10">
                 <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-500/10 rounded-full blur-[120px] mix-blend-screen animate-pulse duration-[10000ms]" />

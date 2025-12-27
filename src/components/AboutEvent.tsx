@@ -29,7 +29,7 @@ const AboutEvent: React.FC = () => {
                             <p>
                                 A <span className="text-white font-bold decoration-blue-500 underline decoration-4 underline-offset-4">first-ever campus arena</span> where early-stage founders pitch live in front of real investors - and can get funded on the spot.
                             </p>
-                            <p>
+                            <p className='text-xl'>
                                 Students don’t watch it on TV. They experience it in the auditorium - <span className="text-white font-bold italic">raw, real and high energy</span>.
                             </p>
                         </div>

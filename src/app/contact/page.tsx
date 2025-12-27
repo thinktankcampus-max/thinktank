@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Mail, MapPin, Phone, Send, MessageSquare, ArrowRight } from 'lucide-react';
+import { Mail, MapPin, Phone, Send, MessageSquare, ArrowRight, Instagram, Linkedin, MessageCircle } from 'lucide-react';
 
 const ContactPage = () => {
     const [formData, setFormData] = useState({
@@ -12,6 +12,13 @@ const ContactPage = () => {
         subject: '',
         message: ''
     });
+
+    const social = [
+        { icon: Instagram, href: 'https://www.instagram.com/thinktank.campus?igsh=MWlhNWZybTQ4aWhwOQ==' },
+        { icon: Linkedin, href: 'https://www.linkedin.com/company/think-tank-campus-rebelive/' },
+        { icon: MessageCircle, href: 'https://whatsapp.com/channel/0029Vb7YsYF6rsR1PWfAYV3T' },
+
+    ]
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -26,7 +33,7 @@ const ContactPage = () => {
 
     return (
         <div className="min-h-screen bg-black text-white selection:bg-blue-500/30 font-sans">
-            <Header />
+         
 
             <main className="pt-32 pb-24 relative overflow-hidden">
                 {/* Background Glows */}
@@ -63,7 +70,7 @@ const ContactPage = () => {
                                         <div>
                                             <p className="text-sm text-gray-500 uppercase font-bold tracking-wider mb-1">Email Us</p>
                                             <a href="mailto:hello@thinktankcampus.com" className="text-lg md:text-xl font-medium text-white hover:text-blue-400 transition-colors">
-                                                hello@thinktankcampus.com
+                                                team@thinktankcampus.com
                                             </a>
                                         </div>
                                     </div>
@@ -74,7 +81,7 @@ const ContactPage = () => {
                                         <div>
                                             <p className="text-sm text-gray-500 uppercase font-bold tracking-wider mb-1">Call Us</p>
                                             <p className="text-lg md:text-xl font-medium text-white">
-                                                +91 98765 43210
+                                               +91 95981 48055
                                             </p>
                                         </div>
                                     </div>
@@ -104,9 +111,9 @@ const ContactPage = () => {
                                     Stay updated with the latest announcements and connect with fellow participants on our social channels.
                                 </p>
                                 <div className="flex gap-4">
-                                    {['Twitter', 'Instagram', 'LinkedIn'].map((social) => (
-                                        <a key={social} href="#" className="flex-1 py-3 rounded-xl bg-white/5 border border-white/5 text-center text-sm font-bold hover:bg-white/10 hover:scale-105 transition-all">
-                                            {social}
+                                    {social.map((item, index) => (
+                                        <a key={index} href={item.href} className="flex-1 py-3 rounded-xl bg-white/5 border border-white/5 text-center text-sm font-bold hover:bg-white/10 hover:scale-105 transition-all flex items-center justify-center">
+                                            <item.icon size={20} />
                                         </a>
                                     ))}
                                 </div>
@@ -184,7 +191,7 @@ const ContactPage = () => {
                 </div>
             </main>
 
-            <Footer />
+
         </div>
     );
 };

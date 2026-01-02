@@ -1,9 +1,9 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Send, CheckCircle, Rocket, Sparkles, User, Briefcase, Store } from 'lucide-react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
-import { register, registerGroup } from '../store/slices/authSlice';
+import { register, registerGroup, fetchRegistrationForm } from '../store/slices/authSlice';
 
 type RegistrationType = 'pitching' | 'expo' | 'delegate';
 
@@ -13,11 +13,37 @@ import { RegistrationError } from '../types/auth';
 const RegistrationForm: React.FC = () => {
     const [activeTab, setActiveTab] = useState<RegistrationType>('pitching');
     const [submitted, setSubmitted] = useState(false);
-    const dispatch = useDispatch<any>(); // using any to avoid type issues if store not typed
+    const dispatch = useDispatch<any>();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [errorModalOpen, setErrorModalOpen] = useState(false);
     const [currentError, setCurrentError] = useState<RegistrationError | null>(null);
+
+    // Get form data from Redux store
+    const { formData: apiFormData, formLoading, error: formError } = useSelector((state: any) => state.auth || {});
+
+    // Fetch registration form data on mount
+    useEffect(() => {
+        dispatch(fetchRegistrationForm());
+    }, [dispatch]);
+
+    // Get ticket ID based on active tab and team size
+    const getTicketId = () => {
+        if (!apiFormData?.tickets) return null;
+
+        if (activeTab === 'pitching') {
+            if (formData.teamSize === '2') {
+                return apiFormData.tickets.find((t: any) => t.type === '2 Person Pitching Startup')?._id;
+            } else {
+                return apiFormData.tickets.find((t: any) => t.type === 'Pitching Startup')?._id;
+            }
+        } else if (activeTab === 'expo') {
+            return apiFormData.tickets.find((t: any) => t.type === 'Startup Expo')?._id;
+        } else if (activeTab === 'delegate') {
+            return apiFormData.tickets.find((t: any) => t.type === 'Event Delegate Pass')?._id;
+        }
+        return null;
+    };
 
     // Unified form state
     const [formData, setFormData] = useState({
@@ -41,73 +67,91 @@ const RegistrationForm: React.FC = () => {
         setLoading(true);
         console.log("Submitting for:", activeTab, formData);
 
-        // Constants
-        const TICKET_ID = "68bc499d9fe7eb39119bb986"; // Placeholder ID, likely needs to vary by type
+        const ticketId = getTicketId();
+        if (!ticketId) {
+            setCurrentError({
+                status: 'error',
+                message: 'Unable to find ticket information. Please try again.'
+            });
+            setErrorModalOpen(true);
+            setLoading(false);
+            return;
+        }
 
         try {
             let actionResult;
 
+            // Build dynamic fields based on active tab
+            const buildDynamicFields = () => {
+                const fields: any = {};
+
+                if (formData.college) fields.collage = formData.college;
+                if (formData.startupName) fields.startup_name = formData.startupName;
+                if (formData.linkedin) fields.linkedin_profile = formData.linkedin;
+                if (formData.pitchDeck) fields.pitch_deck_url = formData.pitchDeck;
+                if (formData.website) fields.website_url = formData.website;
+                if (formData.description) fields.product_description = formData.description;
+
+                return fields;
+            };
+
             if (activeTab === 'pitching' && formData.teamSize === '2') {
                 // Group Registration Payload
+                const dynamicFields = buildDynamicFields();
                 const payload = {
-                    ticketId: TICKET_ID,
-                    teamName: formData.startupName,
-                    members: [
-                        {
-                            name: formData.name,
-                            email: formData.email,
-                            phone: formData.phone,
-                            role: 'Leader'
-                        },
+                    ticketId: ticketId,
+                    groupName: `${formData.startupName || 'Team'}-${Date.now()}`,
+                    groupLeader: {
+                        name: formData.name,
+                        email: formData.email,
+                        phone: formData.phone,
+                        dynamicFields: dynamicFields
+                    },
+                    groupMembers: [
                         {
                             name: formData.name2,
                             email: formData.email2,
                             phone: formData.phone2,
-                            role: 'Member'
+                            dynamicFields: dynamicFields
                         }
                     ],
-                    dynamicFields: {
-                        pitchDeck: formData.pitchDeck,
-                        linkedin: formData.linkedin,
-                        website: formData.website,
-                        college: formData.college,
-                    }
+                    couponCode: null
                 };
+                console.log('Final Group Registration Payload:', payload);
                 actionResult = await dispatch((registerGroup as any)(payload));
             } else {
                 // Single Registration Payload
-                // Construct payload matching the screenshot structure + form data
                 const payload = {
-                    ticketId: TICKET_ID,
+                    ticketId: ticketId,
                     name: formData.name,
                     email: formData.email,
                     phone: formData.phone,
-                    couponCode: null,
-                    referralCode: null,
-                    dynamicFields: {
-                        registration_number: formData.college, // Assuming mapping
-                        phone: formData.phone,
-                        startupName: formData.startupName,
-                        linkedin: formData.linkedin,
-                        website: formData.website,
-                        pitchDeck: formData.pitchDeck,
-                        description: formData.description,
-                        participationType: activeTab // details
-                    }
+                    dynamicFields: buildDynamicFields()
                 };
+                console.log('Final Single Registration Payload:', payload);
                 actionResult = await dispatch((register as any)(payload));
             }
 
             if (register.fulfilled.match(actionResult) || registerGroup.fulfilled.match(actionResult)) {
-                const data = actionResult.payload;
-                // Assuming accessToken is in data.accessToken or data.token
-                const token = data?.accessToken || data?.token;
+                const response = actionResult.payload;
 
-                if (token) {
-                    router.push(`/success?accessToken=${token}`);
+                // Check if payment is required
+                if (response?.code === 'PAYMENT_REQUIRED' && response?.data?.payment?.id) {
+                    const paymentId = response.data.payment.id;
+                    const currentUrl = window.location.origin;
+                    const redirectUrl = `${currentUrl}/payment-status`;
+                    const paymentBaseUrl = process.env.NEXT_PUBLIC_PAYMENT_URL || 'http://localhost:3001';
+                    const paymentUrl = `${paymentBaseUrl}/events/thinktank/payment?sessionId=${paymentId}&redirect=${encodeURIComponent(redirectUrl)}`;
+                    window.location.href = paymentUrl;
                 } else {
-                    // Fallback if no token but success
-                    setSubmitted(true);
+                    // Check for token-based success
+                    const token = response?.accessToken || response?.token;
+                    if (token) {
+                        router.push(`/success?accessToken=${token}`);
+                    } else {
+                        // Fallback if no token but success
+                        setSubmitted(true);
+                    }
                 }
             } else {
                 // Error handling
@@ -157,6 +201,41 @@ const RegistrationForm: React.FC = () => {
                         className="bg-blue-600 hover:bg-blue-700 text-white font-black px-8 py-4 rounded-2xl transition-all"
                     >
                         Register for another category
+                    </button>
+                </div>
+            </section>
+        );
+    }
+
+    // Loading state while fetching form data
+    if (formLoading) {
+        return (
+            <section id="register" className="min-h-screen flex items-center justify-center bg-black relative">
+                <div className="absolute inset-0 bg-blue-600/10 blur-[100px] rounded-full transform scale-50"></div>
+                <div className="text-center p-12 glass-panel rounded-[3rem] max-w-2xl mx-auto z-10">
+                    <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-400 text-xl">Loading registration form...</p>
+                </div>
+            </section>
+        );
+    }
+
+    // Show error if form data failed to load but allow retry
+    if (formError && !apiFormData) {
+        return (
+            <section id="register" className="min-h-screen flex items-center justify-center bg-black relative">
+                <div className="absolute inset-0 bg-blue-600/10 blur-[100px] rounded-full transform scale-50"></div>
+                <div className="text-center p-12 glass-panel rounded-[3rem] max-w-2xl mx-auto z-10">
+                    <div className="text-red-500 text-6xl mb-4">⚠️</div>
+                    <h2 className="text-3xl font-bold text-white mb-4">Failed to load form</h2>
+                    <p className="text-gray-400 mb-6">
+                        {typeof formError === 'string' ? formError : formError?.message || 'Unable to fetch registration form'}
+                    </p>
+                    <button
+                        onClick={() => dispatch(fetchRegistrationForm())}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-4 rounded-2xl transition-all"
+                    >
+                        Retry
                     </button>
                 </div>
             </section>

@@ -2,18 +2,27 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
 
-const API_URL = "https://orgatic.in/api/";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
 // const API_URL = "http://localhost:5000/api/user/";
 
 
-
+// Fetch registration form data
+export const fetchRegistrationForm = createAsyncThunk("auth/fetchRegistrationForm", async (_, { rejectWithValue }) => {
+  try {
+    const response = await axios.get(`${API_URL}/events/thinktank/registration`);
+    return response.data;
+  } catch (err) {
+    console.log(err);
+    return rejectWithValue(err.response?.data || "Failed to fetch registration form");
+  }
+});
 
 
 export const register = createAsyncThunk("auth/register", async (formData, { rejectWithValue }) => {
   try {
 
-    const response = await axios.post(`${API_URL}event/think-tank/register`, formData, { withCredentials: true });
-
+    const response = await axios.post(`${API_URL}/event/thinktank/register/v1`, formData, { withCredentials: true });
+    console.log(response.data);
     return response.data;
 
   } catch (err) {
@@ -23,7 +32,8 @@ export const register = createAsyncThunk("auth/register", async (formData, { rej
 
 export const registerGroup = createAsyncThunk("auth/registerGroup", async (formData, { rejectWithValue }) => {
   try {
-    const response = await axios.post(`${API_URL}event/think-tank/group-register`, formData, { withCredentials: true });
+    const response = await axios.post(`${API_URL}/event/thinktank/register/v1`, formData, { withCredentials: true });
+    console.log(response.data);
     return response.data;
   } catch (err) {
     return rejectWithValue(err.response?.data || "Group registration failed");
@@ -53,7 +63,9 @@ const initialState = {
   bookingStatus: null,
   error: null,
   applicationStatus: null,
-  errordata: null
+  errordata: null,
+  formData: null,
+  formLoading: false
 };
 
 // Auth Slice
@@ -66,9 +78,19 @@ const authSlice = createSlice({
   extraReducers: (builder) => {
     builder
 
-
-
-
+      // Fetch registration form
+      .addCase(fetchRegistrationForm.pending, (state) => {
+        state.formLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchRegistrationForm.fulfilled, (state, action) => {
+        state.formLoading = false;
+        state.formData = action.payload.data;
+      })
+      .addCase(fetchRegistrationForm.rejected, (state, action) => {
+        state.formLoading = false;
+        state.error = action.payload;
+      })
 
       //apply
 

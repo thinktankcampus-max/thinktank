@@ -44,12 +44,7 @@ const Hero: React.FC = () => {
                             >
                                 Apply Now
                             </Link>
-                            <button className="w-full sm:w-auto flex items-center justify-center gap-3 text-white hover:text-blue-300 px-8 py-4 font-medium transition-colors group">
-                                <div className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center group-hover:border-blue-400/50 transition-colors">
-                                    <Play size={16} fill="currentColor" className="ml-1" />
-                                </div>
-                                <span>Watch 2024 Recap</span>
-                            </button>
+                          
                         </div>
                     </div>
 
@@ -68,7 +63,7 @@ const Hero: React.FC = () => {
                                     <div className="grid grid-cols-2 gap-x-8 gap-y-12 relative z-10">
                                         {[
                                             { val: '100K+', label: 'Footfall' },
-                                            { val: '₹10Cr+', label: 'Funding' },
+                                            { val: '₹1000 Cr+', label: 'Investor Network' },
                                             { val: '500+', label: 'Campuses' },
                                             { val: '50+', label: 'Investors' },
                                         ].map((stat, i) => (
@@ -79,6 +74,10 @@ const Hero: React.FC = () => {
                                         ))}
                                     </div>
                                 </div>
+                            </div>
+
+                            <div className="mt-8 mb-4">
+                                <p className="text-sm font-bold text-gray-500 uppercase tracking-widest text-center">Supported By</p>
                             </div>
 
                             <LogoMarquee />

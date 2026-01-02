@@ -1,12 +1,23 @@
 'use client'
 import React, { useState } from 'react';
 import { Send, CheckCircle, Rocket, Sparkles, User, Briefcase, Store } from 'lucide-react';
+import { useDispatch } from 'react-redux';
+import { useRouter } from 'next/navigation';
+import { register, registerGroup } from '../store/slices/authSlice';
 
 type RegistrationType = 'pitching' | 'expo' | 'delegate';
+
+import ErrorModal from './ErrorModal';
+import { RegistrationError } from '../types/auth';
 
 const RegistrationForm: React.FC = () => {
     const [activeTab, setActiveTab] = useState<RegistrationType>('pitching');
     const [submitted, setSubmitted] = useState(false);
+    const dispatch = useDispatch<any>(); // using any to avoid type issues if store not typed
+    const router = useRouter();
+    const [loading, setLoading] = useState(false);
+    const [errorModalOpen, setErrorModalOpen] = useState(false);
+    const [currentError, setCurrentError] = useState<RegistrationError | null>(null);
 
     // Unified form state
     const [formData, setFormData] = useState({
@@ -19,14 +30,106 @@ const RegistrationForm: React.FC = () => {
         website: '',
         pitchDeck: '',
         description: '',
-        teamSize: '1', // '1' or '2' for pitching
+        teamSize: '1', // '1' or '2' 
+        name2: '',
+        email2: '',
+        phone2: '',
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Here you would handle the submission logic based on activeTab and formData
+        setLoading(true);
         console.log("Submitting for:", activeTab, formData);
-        setSubmitted(true);
+
+        // Constants
+        const TICKET_ID = "68bc499d9fe7eb39119bb986"; // Placeholder ID, likely needs to vary by type
+
+        try {
+            let actionResult;
+
+            if (activeTab === 'pitching' && formData.teamSize === '2') {
+                // Group Registration Payload
+                const payload = {
+                    ticketId: TICKET_ID,
+                    teamName: formData.startupName,
+                    members: [
+                        {
+                            name: formData.name,
+                            email: formData.email,
+                            phone: formData.phone,
+                            role: 'Leader'
+                        },
+                        {
+                            name: formData.name2,
+                            email: formData.email2,
+                            phone: formData.phone2,
+                            role: 'Member'
+                        }
+                    ],
+                    dynamicFields: {
+                        pitchDeck: formData.pitchDeck,
+                        linkedin: formData.linkedin,
+                        website: formData.website,
+                        college: formData.college,
+                    }
+                };
+                actionResult = await dispatch((registerGroup as any)(payload));
+            } else {
+                // Single Registration Payload
+                // Construct payload matching the screenshot structure + form data
+                const payload = {
+                    ticketId: TICKET_ID,
+                    name: formData.name,
+                    email: formData.email,
+                    phone: formData.phone,
+                    couponCode: null,
+                    referralCode: null,
+                    dynamicFields: {
+                        registration_number: formData.college, // Assuming mapping
+                        phone: formData.phone,
+                        startupName: formData.startupName,
+                        linkedin: formData.linkedin,
+                        website: formData.website,
+                        pitchDeck: formData.pitchDeck,
+                        description: formData.description,
+                        participationType: activeTab // details
+                    }
+                };
+                actionResult = await dispatch((register as any)(payload));
+            }
+
+            if (register.fulfilled.match(actionResult) || registerGroup.fulfilled.match(actionResult)) {
+                const data = actionResult.payload;
+                // Assuming accessToken is in data.accessToken or data.token
+                const token = data?.accessToken || data?.token;
+
+                if (token) {
+                    router.push(`/success?accessToken=${token}`);
+                } else {
+                    // Fallback if no token but success
+                    setSubmitted(true);
+                }
+            } else {
+                // Error handling
+                const errorMessage = actionResult.payload?.message || "Unknown error occurred";
+                setCurrentError({
+                    status: 'error',
+                    message: errorMessage,
+                    // Map other details if available in payload
+                });
+                setErrorModalOpen(true);
+            }
+
+        } catch (error: any) {
+            console.error("Submission error:", error);
+            setCurrentError({
+                status: 'error',
+                message: error.message || "An unexpected error occurred."
+            });
+            setErrorModalOpen(true);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -62,6 +165,11 @@ const RegistrationForm: React.FC = () => {
 
     return (
         <section id="register" className="py-24 relative bg-black overflow-hidden">
+            <ErrorModal
+                isOpen={errorModalOpen}
+                onClose={() => setErrorModalOpen(false)}
+                error={currentError}
+            />
             {/* Background Effects */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full opacity-20 pointer-events-none">
                 <div className="absolute top-1/4 left-10 w-96 h-96 bg-blue-600 rounded-full blur-[150px]"></div>
@@ -221,6 +329,53 @@ const RegistrationForm: React.FC = () => {
                                         </select>
                                     </div>
                                 </div>
+
+                                {formData.teamSize === '2' && (
+                                    <div className="mb-6 p-6 rounded-2xl bg-white/5 border border-white/10 animate-in fade-in slide-in-from-top-4 duration-300">
+                                        <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                            <User size={18} className="text-blue-500" />
+                                            Team Member 2
+                                        </h4>
+                                        <div className="grid md:grid-cols-2 gap-6 mb-4">
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">Full Name</label>
+                                                <input
+                                                    required
+                                                    name="name2"
+                                                    type="text"
+                                                    placeholder="Member Name"
+                                                    value={formData.name2}
+                                                    onChange={handleInputChange}
+                                                    className="w-full bg-black/20 border border-white/10 rounded-xl px-5 py-4 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder:text-gray-700"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">Email Address</label>
+                                                <input
+                                                    required
+                                                    name="email2"
+                                                    type="email"
+                                                    placeholder="member@example.com"
+                                                    value={formData.email2}
+                                                    onChange={handleInputChange}
+                                                    className="w-full bg-black/20 border border-white/10 rounded-xl px-5 py-4 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder:text-gray-700"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">Phone Number</label>
+                                            <input
+                                                required
+                                                name="phone2"
+                                                type="tel"
+                                                placeholder="+91..."
+                                                value={formData.phone2}
+                                                onChange={handleInputChange}
+                                                className="w-full bg-black/20 border border-white/10 rounded-xl px-5 py-4 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder:text-gray-700"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="grid md:grid-cols-2 gap-6 mb-6">
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">LinkedIn Profile</label>
@@ -235,7 +390,7 @@ const RegistrationForm: React.FC = () => {
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">Pitch Deck URL</label>
                                         <input
-                                            
+
                                             name="pitchDeck"
                                             placeholder="Google Drive / DocSend Link"
                                             value={formData.pitchDeck}
@@ -244,9 +399,9 @@ const RegistrationForm: React.FC = () => {
                                         />
                                     </div>
                                 </div>
-                                
+
                                 <div className="grid md:grid-cols-2 gap-6 mb-6">
-                                      <div className="space-y-2">
+                                    <div className="space-y-2">
                                         <label className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">Website URL</label>
                                         <input
                                             name="website"
@@ -302,10 +457,11 @@ const RegistrationForm: React.FC = () => {
 
                         <button
                             type="submit"
-                            className="w-full mt-6 bg-white text-black font-black py-5 rounded-2xl text-xl transition-all flex items-center justify-center gap-3 group hover:bg-blue-500 hover:text-white shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(37,99,235,0.4)]"
+                            disabled={loading}
+                            className="w-full mt-6 bg-white text-black font-black py-5 rounded-2xl text-xl transition-all flex items-center justify-center gap-3 group hover:bg-blue-500 hover:text-white shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(37,99,235,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Proceed to Payment
-                            <span className="group-hover:translate-x-1 transition-transform">→</span>
+                            {loading ? 'Processing...' : 'Proceed to Payment'}
+                            {!loading && <span className="group-hover:translate-x-1 transition-transform">→</span>}
                         </button>
 
                         <p className="text-xs text-gray-500 text-center mt-6">

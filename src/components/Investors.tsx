@@ -35,7 +35,7 @@ const Investors: React.FC = () => {
 
                 <div className="flex flex-wrap justify-center gap-10 md:gap-x-20 md:gap-y-16 max-w-6xl mx-auto">
                     {investors.map((person, index) => (
-                        <div key={index} className="flex flex-col items-center text-center group w-40 md:w-56">
+                        <div key={index} className="flex flex-col items-center text-center group w-36 md:w-56">
                             <div className="relative w-32 h-32 md:w-48 md:h-48 mb-6 rounded-full overflow-hidden border-4 border-white/5 group-hover:border-blue-500/50 transition-colors duration-300 bg-white/5">
                                 <Image src={person.image} alt={person.name} width={100} height={100} className="w-full h-full object-cover" />
                             </div>

@@ -5,11 +5,15 @@ import Image from 'next/image';
 
 const amar="/investors/Amar.png";
 const abhiram="/investors/Abhiram.jpeg";
+const mudit="/investors/Mudit.jpeg";
+const suraj="/investors/Suraj.png";
 
 
 const investors = [
     { name: 'Amar Dixit', role: 'Founding partner & CIO swiftSeed Ventures', image: amar },
     { name: 'Abhiram Bhalerao ', role: 'Partner V3 venture', image: abhiram },
+    { name: 'Mudit Kumar', role: 'Founder of Ideabaaz', image: mudit },
+    { name: 'Suraj Juneja', role: 'Founder of Freeflow venture', image: suraj },
     // { name: 'Raelene Thomas', role: 'VP, Finance & Operations', image: amar },
     // { name: 'Mitchell Fawcett', role: 'VP, Strategy', image: amar },
     // { name: 'Jieun Segal', role: 'VP, Sales & Marketing', image: amar },

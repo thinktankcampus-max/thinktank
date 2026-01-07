@@ -318,7 +318,7 @@ const RegistrationForm: React.FC = () => {
                                     <div className="flex justify-center text-gray-300">
                                         <p><span className="text-blue-400 font-bold text-xl">{needAccommodation ? '₹1,699' : '₹699'}</span> / person</p>
                                     </div>
-                                    <p className="text-sm text-gray-500 mt-2">Access to all sessions & networking {needAccommodation && '+ Food & Stay'}</p>
+                                    <p className="text-sm text-gray-500 mt-2">Access to all sessions  {needAccommodation && '+ Food & Stay'} (excluding networking)</p>
                                 </div>
                             )}
                             {activeTab === 'pitching' && (
@@ -329,7 +329,7 @@ const RegistrationForm: React.FC = () => {
                                         <span className="hidden md:block text-gray-600">|</span>
                                         <p><span className="text-blue-400 font-bold text-xl">₹2,499</span> / 2 team members</p>
                                     </div>
-                                    <p className="text-sm text-gray-500 mt-2">Includes food (Excludes accommodation)</p>
+                                    <p className="text-sm text-gray-500 mt-2">Includes food + accommodation </p>
                                 </div>
                             )}
                             {activeTab === 'expo' && (
@@ -338,7 +338,7 @@ const RegistrationForm: React.FC = () => {
                                     <div className="flex justify-center text-gray-300">
                                         <p><span className="text-blue-400 font-bold text-xl">₹9,999</span> / Startup (max 2 persons)</p>
                                     </div>
-                                    <p className="text-sm text-gray-500 mt-2">Limited seats available</p>
+                                    <p className="text-sm text-gray-500 mt-2">Limited seats available (includes food + accommodation)</p>
                                 </div>
                             )}
 
